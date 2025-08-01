@@ -18,6 +18,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 import com.example.entity.Employee;
 import com.example.entity.Project;
+import com.example.entity.Outcome;
+import com.example.entity.Report;
 
 @Service
 @Slf4j
@@ -100,16 +102,14 @@ public class KnowledgeGraphQueryService {
             // Get outcomes from these projects
             log.info("Finding outcomes by project category: '{}'", category);
             var outcomes = outcomeRepository.findOutcomesByProjectCategory(category);
-            log.info("Found {} outcome details", outcomes.size());
-            context.setOutcomes(new ArrayList<>());
-            context.setOutcomeDetails(outcomes);
+            log.info("Found {} outcomes", outcomes.size());
+            context.setOutcomes(outcomes);
             
             // Get supporting reports
             log.info("Finding reports by project category: '{}'", category);
             var reports = reportRepository.findReportsByProjectCategory(category);
-            log.info("Found {} report details", reports.size());
-            context.setReports(new ArrayList<>());
-            context.setReportDetails(reports);
+            log.info("Found {} reports", reports.size());
+            context.setReports(reports);
             
         } catch (Exception e) {
             log.error("Error querying people by project: {}", e.getMessage(), e);
@@ -125,8 +125,8 @@ public class KnowledgeGraphQueryService {
         String outcomeKeyword = entities.getPrimaryOutcomeKeyword();
         
         try {
-            var outcomeDetails = outcomeRepository.findOutcomeDetails(category, outcomeKeyword);
-            context.setOutcomeDetails(outcomeDetails);
+            var outcomes = outcomeRepository.findOutcomeDetails(category, outcomeKeyword);
+            context.setOutcomes(outcomes);
             
             // Get related projects and reports
             var projects = projectRepository.findProjectsWithOutcomesByCategory(category);
@@ -150,8 +150,8 @@ public class KnowledgeGraphQueryService {
             context.setProjectSummaries(projectSummaries);
             
             // Get detailed outcomes
-            var outcomeDetails = outcomeRepository.findOutcomesByProjectCategory(category);
-            context.setOutcomeDetails(outcomeDetails);
+            var outcomes = outcomeRepository.findOutcomesByProjectCategory(category);
+            context.setOutcomes(outcomes);
             
         } catch (Exception e) {
             log.error("Error querying project outcomes: {}", e.getMessage());
@@ -165,12 +165,12 @@ public class KnowledgeGraphQueryService {
         String category = entities.getPrimaryProjectCategory();
         
         try {
-            var reportDetails = reportRepository.findReportsByProjectCategory(category);
-            context.setReportDetails(reportDetails);
+            var reports = reportRepository.findReportsByProjectCategory(category);
+            context.setReports(reports);
             
             // Get related outcomes that these reports document
             var outcomes = outcomeRepository.findOutcomesByProjectCategory(category);
-            context.setOutcomeDetails(outcomes);
+            context.setOutcomes(outcomes);
             
         } catch (Exception e) {
             log.error("Error querying reports: {}", e.getMessage());
@@ -251,15 +251,15 @@ public class KnowledgeGraphQueryService {
             log.info("Skipping project summaries due to mapping error");
             context.setProjectSummaries(new ArrayList<>());
             
-            log.info("Finding outcome details by category: '{}'", category);
-            var outcomeDetails = outcomeRepository.findOutcomeDetails(category, "");
-            log.info("Found {} outcome details", outcomeDetails.size());
-            context.setOutcomeDetails(outcomeDetails);
+            log.info("Finding outcomes by category: '{}'", category);
+            var outcomes = outcomeRepository.findOutcomeDetails(category, "");
+            log.info("Found {} outcomes", outcomes.size());
+            context.setOutcomes(outcomes);
             
-            log.info("Finding report details by category: '{}'", category);
-            var reportDetails = reportRepository.findReportsByProjectCategory(category);
-            log.info("Found {} report details", reportDetails.size());
-            context.setReportDetails(reportDetails);
+            log.info("Finding reports by category: '{}'", category);
+            var reports = reportRepository.findReportsByProjectCategory(category);
+            log.info("Found {} reports", reports.size());
+            context.setReports(reports);
             
         } catch (Exception e) {
             log.error("Error in comprehensive query: {}", e.getMessage(), e);

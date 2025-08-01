@@ -28,6 +28,6 @@ public interface ReportRepository extends Neo4jRepository<Report, String> {
     
     @Query("MATCH (p:Project)-[:PRODUCED]->(r:Report) " +
            "WHERE p.category CONTAINS $projectCategory " +
-           "RETURN r, p.name AS projectName ORDER BY r.date DESC")
-    List<Object> findReportsByProjectCategory(@Param("projectCategory") String projectCategory);
+           "RETURN DISTINCT r ORDER BY r.date DESC")
+    List<Report> findReportsByProjectCategory(@Param("projectCategory") String projectCategory);
 }

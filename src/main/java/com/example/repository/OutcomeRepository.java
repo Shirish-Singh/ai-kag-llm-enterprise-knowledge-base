@@ -20,19 +20,11 @@ public interface OutcomeRepository extends Neo4jRepository<Outcome, String> {
     
     @Query("MATCH (p:Project)-[:ACHIEVED]->(o:Outcome) " +
            "WHERE p.category CONTAINS $projectCategory " +
-           "OPTIONAL MATCH (r:Report)-[:DOCUMENTS]->(o) " +
-           "RETURN o, collect(r) AS supportingReports")
-    List<Object> findOutcomesByProjectCategory(@Param("projectCategory") String projectCategory);
+           "RETURN DISTINCT o")
+    List<Outcome> findOutcomesByProjectCategory(@Param("projectCategory") String projectCategory);
     
     @Query("MATCH (o:Outcome) " +
            "WHERE o.category CONTAINS $category OR o.description CONTAINS $keyword " +
-           "OPTIONAL MATCH (p:Project)-[:ACHIEVED]->(o) " +
-           "OPTIONAL MATCH (r:Report)-[:DOCUMENTS]->(o) " +
-           "RETURN o.description AS outcome, " +
-           "o.metrics AS metrics, " +
-           "o.impactLevel AS impact, " +
-           "o.achievedDate AS dateAchieved, " +
-           "collect(DISTINCT p.name) AS relatedProjects, " +
-           "collect(DISTINCT r.title) AS documentedIn")
-    List<Object> findOutcomeDetails(@Param("category") String category, @Param("keyword") String keyword);
+           "RETURN o")
+    List<Outcome> findOutcomeDetails(@Param("category") String category, @Param("keyword") String keyword);
 }
