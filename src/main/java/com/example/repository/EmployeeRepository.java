@@ -1,6 +1,7 @@
 package com.example.repository;
 
 import com.example.entity.Employee;
+import com.example.entity.Project;
 import org.springframework.data.neo4j.repository.Neo4jRepository;
 import org.springframework.data.neo4j.repository.query.Query;
 import org.springframework.data.repository.query.Param;
@@ -37,4 +38,12 @@ public interface EmployeeRepository extends Neo4jRepository<Employee, String> {
            "collect(DISTINCT r) AS supportingReports, " +
            "collect(DISTINCT colleague) AS collaborators")
     List<Employee> findEmployeesWithProjectOutcomes(@Param("projectCategory") String projectCategory);
+    
+    @Query("MATCH (e:Employee) WHERE e.name = $name RETURN e")
+    List<Employee> findByName(@Param("name") String name);
+    
+    @Query("MATCH (e:Employee)-[:WORKED_ON]->(p:Project) " +
+           "WHERE e.name = $employeeName " +
+           "RETURN DISTINCT p")
+    List<Project> findProjectsByEmployeeName(@Param("employeeName") String employeeName);
 }

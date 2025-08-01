@@ -7,7 +7,6 @@ import org.springframework.data.neo4j.core.schema.Id;
 import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Property;
 
-import java.time.LocalDate;
 
 @Node
 @Data
@@ -28,7 +27,7 @@ public class Outcome {
     private String metrics;
     
     @Property
-    private LocalDate achievedDate;
+    private String achievedDate;
     
     @Property
     private String category;

@@ -8,7 +8,7 @@ import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
 import org.springframework.data.neo4j.core.schema.Property;
 
-import java.time.LocalDate;
+
 
 @RelationshipProperties
 @Data
@@ -20,7 +20,7 @@ public class ReviewedRelationship {
     private Long id;
     
     @Property
-    private LocalDate reviewDate;
+    private String reviewDate;
     
     @Property
     private String reviewStatus;

@@ -11,9 +11,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
+import com.example.entity.Employee;
+import com.example.entity.Project;
 
 @Service
 @Slf4j
@@ -26,64 +30,92 @@ public class KnowledgeGraphQueryService {
     private final OutcomeRepository outcomeRepository;
     
     public KnowledgeGraphContext queryKnowledgeGraph(QueryEntities entities) {
-        log.info("Querying knowledge graph with entities: {}", entities);
+        log.info("=== KNOWLEDGE GRAPH QUERY START ===");
+        log.info("Input entities: {}", entities);
+        log.info("Query intent: {}", entities.getQueryIntent());
+        log.info("Person names: {}", entities.getPersonNames());
+        log.info("Employee keywords: {}", entities.getEmployeeKeywords());
+        log.info("Project keywords: {}", entities.getProjectKeywords());
         
         KnowledgeGraphContext context = new KnowledgeGraphContext();
         
         // Query based on intent and entities
         switch (entities.getQueryIntent()) {
             case FIND_PEOPLE_BY_PROJECT:
+                log.info("Executing FIND_PEOPLE_BY_PROJECT query");
                 context = queryPeopleByProject(entities);
                 break;
             case FIND_OUTCOMES:
+                log.info("Executing FIND_OUTCOMES query");
                 context = queryOutcomes(entities);
                 break;
             case FIND_PROJECT_OUTCOMES:
+                log.info("Executing FIND_PROJECT_OUTCOMES query");
                 context = queryProjectOutcomes(entities);
                 break;
             case FIND_REPORTS:
+                log.info("Executing FIND_REPORTS query");
                 context = queryReports(entities);
                 break;
             case COMPREHENSIVE_SEARCH:
             default:
+                log.info("Executing COMPREHENSIVE_SEARCH query");
                 context = queryComprehensive(entities);
                 break;
         }
         
-        log.info("Knowledge graph context retrieved with {} employees, {} projects, {} outcomes, {} reports",
-                context.getEmployees().size(), context.getProjects().size(), 
-                context.getOutcomes().size(), context.getReports().size());
+        log.info("=== KNOWLEDGE GRAPH QUERY RESULTS ===");
+        log.info("Employees found: {}", context.getEmployees() != null ? context.getEmployees().size() : 0);
+        log.info("Projects found: {}", context.getProjects() != null ? context.getProjects().size() : 0);
+        log.info("Outcomes found: {}", context.getOutcomes() != null ? context.getOutcomes().size() : 0);
+        log.info("Reports found: {}", context.getReports() != null ? context.getReports().size() : 0);
+        log.info("Outcome details found: {}", context.getOutcomeDetails() != null ? context.getOutcomeDetails().size() : 0);
+        log.info("Report details found: {}", context.getReportDetails() != null ? context.getReportDetails().size() : 0);
+        log.info("Project summaries found: {}", context.getProjectSummaries() != null ? context.getProjectSummaries().size() : 0);
+        log.info("Total entities in context: {}", context.getTotalEntities());
+        log.info("=== KNOWLEDGE GRAPH QUERY END ===");
         
         return context;
     }
     
     private KnowledgeGraphContext queryPeopleByProject(QueryEntities entities) {
+        log.info("=== QUERY PEOPLE BY PROJECT START ===");
         KnowledgeGraphContext context = new KnowledgeGraphContext();
         String category = entities.getPrimaryProjectCategory();
+        log.info("Primary project category: '{}'", category);
         
         try {
             // Find employees who worked on projects in the specified category
+            log.info("Executing Cypher query: MATCH (e:Employee)-[:WORKED_ON]->(p:Project) WHERE p.category CONTAINS '{}' OR p.name CONTAINS '{}' RETURN DISTINCT e", category, category);
             var employees = employeeRepository.findByProjectCategory(category);
+            log.info("Found {} employees", employees.size());
             context.setEmployees(employees);
             
             // Get related projects
+            log.info("Finding projects by category: '{}'", category);
             var projects = projectRepository.findByCategoryOrNameContaining(category);
+            log.info("Found {} projects", projects.size());
             context.setProjects(projects);
             
             // Get outcomes from these projects
+            log.info("Finding outcomes by project category: '{}'", category);
             var outcomes = outcomeRepository.findOutcomesByProjectCategory(category);
+            log.info("Found {} outcome details", outcomes.size());
             context.setOutcomes(new ArrayList<>());
             context.setOutcomeDetails(outcomes);
             
             // Get supporting reports
+            log.info("Finding reports by project category: '{}'", category);
             var reports = reportRepository.findReportsByProjectCategory(category);
+            log.info("Found {} report details", reports.size());
             context.setReports(new ArrayList<>());
             context.setReportDetails(reports);
             
         } catch (Exception e) {
-            log.error("Error querying people by project: {}", e.getMessage());
+            log.error("Error querying people by project: {}", e.getMessage(), e);
         }
         
+        log.info("=== QUERY PEOPLE BY PROJECT END ===");
         return context;
     }
     
@@ -148,31 +180,100 @@ public class KnowledgeGraphQueryService {
     }
     
     private KnowledgeGraphContext queryComprehensive(QueryEntities entities) {
+        log.info("=== COMPREHENSIVE QUERY START ===");
         KnowledgeGraphContext context = new KnowledgeGraphContext();
         String category = entities.getPrimaryProjectCategory();
+        log.info("Primary project category for comprehensive search: '{}'", category);
+        log.info("Person names in query: {}", entities.getPersonNames());
         
         try {
-            // Get all relevant data for comprehensive response
-            var employees = employeeRepository.findByProjectCategory(category);
-            context.setEmployees(employees);
+            // If we have person names, search specifically for those people
+            if (!entities.getPersonNames().isEmpty()) {
+                log.info("Person names found - searching specifically for these employees");
+                List<Employee> specificEmployees = new ArrayList<>();
+                List<Project> specificProjects = new ArrayList<>();
+                
+                for (String personName : entities.getPersonNames()) {
+                    // Try different name formats
+                    String[] formats = {
+                        personName, // "Carol"
+                        personName.substring(0, 1).toUpperCase() + personName.substring(1).toLowerCase(), // "Carol"
+                        capitalizeWords(personName) // "Carol Johnson" if input was "carol johnson"
+                    };
+                    
+                    for (String nameFormat : formats) {
+                        log.info("Searching for employee with name: '{}'", nameFormat);
+                        var employees = employeeRepository.findByName(nameFormat);
+                        log.info("Found {} employees with name '{}'", employees.size(), nameFormat);
+                        specificEmployees.addAll(employees);
+                        
+                        // Get projects for this specific employee
+                        var projects = employeeRepository.findProjectsByEmployeeName(nameFormat);
+                        log.info("Found {} projects for employee '{}'", projects.size(), nameFormat);
+                        specificProjects.addAll(projects);
+                    }
+                    
+                    // Also try partial matches for "Carol Johnson"
+                    if (personName.contains(" ")) {
+                        String fullName = capitalizeWords(personName);
+                        log.info("Searching for full name: '{}'", fullName);
+                        var employees = employeeRepository.findByName(fullName);
+                        log.info("Found {} employees with full name '{}'", employees.size(), fullName);
+                        specificEmployees.addAll(employees);
+                        
+                        var projects = employeeRepository.findProjectsByEmployeeName(fullName);
+                        log.info("Found {} projects for full name '{}'", projects.size(), fullName);
+                        specificProjects.addAll(projects);
+                    }
+                }
+                
+                // Remove duplicates
+                context.setEmployees(specificEmployees.stream().distinct().collect(Collectors.toList()));
+                context.setProjects(specificProjects.stream().distinct().collect(Collectors.toList()));
+                
+                log.info("After person-specific search: {} employees, {} projects", 
+                    context.getEmployees().size(), context.getProjects().size());
+            }
             
-            var projects = projectRepository.findByCategoryOrNameContaining(category);
-            context.setProjects(projects);
+            // If no specific results from person names, fall back to category search
+            if (context.getEmployees().isEmpty()) {
+                log.info("No specific person results, falling back to category search");
+                var employees = employeeRepository.findByProjectCategory(category);
+                log.info("Found {} employees by category", employees.size());
+                context.setEmployees(employees);
+                
+                var projects = projectRepository.findByCategoryOrNameContaining(category);
+                log.info("Found {} projects by category", projects.size());
+                context.setProjects(projects);
+            }
             
-            var projectSummaries = projectRepository.findProjectSummaryByCategory(category);
-            context.setProjectSummaries(projectSummaries);
+            // Skip project summaries for now due to mapping issue
+            log.info("Skipping project summaries due to mapping error");
+            context.setProjectSummaries(new ArrayList<>());
             
+            log.info("Finding outcome details by category: '{}'", category);
             var outcomeDetails = outcomeRepository.findOutcomeDetails(category, "");
+            log.info("Found {} outcome details", outcomeDetails.size());
             context.setOutcomeDetails(outcomeDetails);
             
+            log.info("Finding report details by category: '{}'", category);
             var reportDetails = reportRepository.findReportsByProjectCategory(category);
+            log.info("Found {} report details", reportDetails.size());
             context.setReportDetails(reportDetails);
             
         } catch (Exception e) {
-            log.error("Error in comprehensive query: {}", e.getMessage());
+            log.error("Error in comprehensive query: {}", e.getMessage(), e);
         }
         
+        log.info("=== COMPREHENSIVE QUERY END ===");
         return context;
+    }
+    
+    private String capitalizeWords(String str) {
+        if (str == null || str.isEmpty()) return str;
+        return Arrays.stream(str.split("\\s+"))
+                .map(word -> word.substring(0, 1).toUpperCase() + word.substring(1).toLowerCase())
+                .collect(Collectors.joining(" "));
     }
     
     public String formatContextForLLM(KnowledgeGraphContext context) {

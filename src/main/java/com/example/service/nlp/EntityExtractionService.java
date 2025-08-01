@@ -64,31 +64,63 @@ public class EntityExtractionService {
     }
     
     public QueryEntities extractEntities(String query) {
-        log.info("Extracting entities from query: {}", query);
+        log.info("=== ENTITY EXTRACTION START ===");
+        log.info("Input query: '{}'", query);
         
         QueryEntities entities = new QueryEntities();
         String lowerQuery = query.toLowerCase();
+        log.info("Lowercase query: '{}'", lowerQuery);
         
         // Extract entity types and keywords using both NLP and keyword matching
-        entities.setEmployeeKeywords(extractEmployeeKeywords(lowerQuery));
-        entities.setProjectKeywords(extractProjectKeywords(lowerQuery));
-        entities.setOutcomeKeywords(extractOutcomeKeywords(lowerQuery));
-        entities.setReportKeywords(extractReportKeywords(lowerQuery));
+        Set<String> employeeKeywords = extractEmployeeKeywords(lowerQuery);
+        log.info("Employee keywords extracted: {}", employeeKeywords);
+        entities.setEmployeeKeywords(employeeKeywords);
+        
+        Set<String> projectKeywords = extractProjectKeywords(lowerQuery);
+        log.info("Project keywords extracted: {}", projectKeywords);
+        entities.setProjectKeywords(projectKeywords);
+        
+        Set<String> outcomeKeywords = extractOutcomeKeywords(lowerQuery);
+        log.info("Outcome keywords extracted: {}", outcomeKeywords);
+        entities.setOutcomeKeywords(outcomeKeywords);
+        
+        Set<String> reportKeywords = extractReportKeywords(lowerQuery);
+        log.info("Report keywords extracted: {}", reportKeywords);
+        entities.setReportKeywords(reportKeywords);
         
         // Use NLP pipeline if available for person names and organizations
         if (pipeline != null) {
+            log.info("NLP pipeline available, extracting person names and organizations");
             try {
-                entities.setPersonNames(extractPersonNames(query));
-                entities.setOrganizations(extractOrganizations(query));
+                Set<String> personNames = extractPersonNames(query);
+                log.info("Person names extracted via NLP: {}", personNames);
+                entities.setPersonNames(personNames);
+                
+                Set<String> organizations = extractOrganizations(query);
+                log.info("Organizations extracted via NLP: {}", organizations);
+                entities.setOrganizations(organizations);
             } catch (Exception e) {
                 log.warn("NLP extraction failed, using keyword-based approach: {}", e.getMessage());
             }
+        } else {
+            log.warn("NLP pipeline not available, skipping person name and organization extraction");
         }
         
         // Determine query intent
-        entities.setQueryIntent(determineQueryIntent(lowerQuery));
+        QueryIntent intent = determineQueryIntent(lowerQuery);
+        log.info("Query intent determined: {}", intent);
+        entities.setQueryIntent(intent);
         
-        log.info("Extracted entities: {}", entities);
+        log.info("=== FINAL EXTRACTED ENTITIES ===");
+        log.info("Person names: {}", entities.getPersonNames());
+        log.info("Employee keywords: {}", entities.getEmployeeKeywords());
+        log.info("Project keywords: {}", entities.getProjectKeywords());
+        log.info("Outcome keywords: {}", entities.getOutcomeKeywords());
+        log.info("Report keywords: {}", entities.getReportKeywords());
+        log.info("Organizations: {}", entities.getOrganizations());
+        log.info("Query intent: {}", entities.getQueryIntent());
+        log.info("=== ENTITY EXTRACTION END ===");
+        
         return entities;
     }
     

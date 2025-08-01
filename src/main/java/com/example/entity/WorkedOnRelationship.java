@@ -8,7 +8,6 @@ import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
 import org.springframework.data.neo4j.core.schema.Property;
 
-import java.time.LocalDate;
 
 @RelationshipProperties
 @Data
@@ -23,10 +22,10 @@ public class WorkedOnRelationship {
     private String role;
     
     @Property
-    private LocalDate startDate;
+    private String startDate;
     
     @Property
-    private LocalDate endDate;
+    private String endDate;
     
     @Property
     private Integer hoursContributed;

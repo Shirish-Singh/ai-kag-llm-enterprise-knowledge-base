@@ -18,30 +18,45 @@ public class KAGService {
     private final CitationService citationService;
     
     public KAGResponse processQuery(String userQuery) {
-        log.info("Processing KAG query: {}", userQuery);
+        log.info("=== KAG SERVICE PROCESSING START ===");
+        log.info("User query: '{}'", userQuery);
         
         try {
             // Step 1: Extract entities and intent from user query
+            log.info("STEP 1: Starting entity extraction");
             QueryEntities entities = entityExtractionService.extractEntities(userQuery);
-            log.info("Extracted entities: {}", entities);
+            log.info("STEP 1 COMPLETE: Entity extraction finished");
             
             // Step 2: Query knowledge graph for relevant context
+            log.info("STEP 2: Starting knowledge graph query");
             KnowledgeGraphContext context = knowledgeGraphQueryService.queryKnowledgeGraph(entities);
-            log.info("Retrieved knowledge graph context with {} total entities", context.getTotalEntities());
+            log.info("STEP 2 COMPLETE: Knowledge graph query finished with {} total entities", context.getTotalEntities());
             
             // Step 3: Format context for LLM consumption
+            log.info("STEP 3: Formatting context for LLM");
             String formattedContext = knowledgeGraphQueryService.formatContextForLLM(context);
+            log.info("STEP 3 COMPLETE: Context formatted. Length: {} characters", formattedContext.length());
+            log.debug("Formatted context: {}", formattedContext);
             
             // Step 4: Generate enhanced prompt with context
+            log.info("STEP 4: Building enhanced prompt");
             String enhancedPrompt = buildEnhancedPrompt(userQuery, formattedContext, entities);
+            log.info("STEP 4 COMPLETE: Enhanced prompt built. Length: {} characters", enhancedPrompt.length());
+            log.debug("Enhanced prompt: {}", enhancedPrompt);
             
             // Step 5: Get LLM response
+            log.info("STEP 5: Calling AI service");
             String llmResponse = aiService.chat(enhancedPrompt, getSystemPrompt(), null);
+            log.info("STEP 5 COMPLETE: AI service response received. Length: {} characters", llmResponse.length());
+            log.debug("LLM response: {}", llmResponse);
             
             // Step 6: Add citations and source tracking
+            log.info("STEP 6: Adding citations");
             String responseWithCitations = citationService.addCitations(llmResponse, context);
+            log.info("STEP 6 COMPLETE: Citations added");
             
             // Step 7: Build final response
+            log.info("STEP 7: Building final KAG response");
             KAGResponse kagResponse = KAGResponse.builder()
                     .userQuery(userQuery)
                     .extractedEntities(entities)
@@ -51,10 +66,15 @@ public class KAGService {
                     .citations(citationService.extractCitations(context))
                     .build();
             
-            log.info("KAG response generated successfully");
+            log.info("=== KAG SERVICE PROCESSING COMPLETE ===");
+            log.info("Final response has {} citations and context with {} total entities", 
+                    kagResponse.getCitations() != null ? kagResponse.getCitations().size() : 0,
+                    context.getTotalEntities());
+            
             return kagResponse;
             
         } catch (Exception e) {
+            log.error("=== KAG SERVICE PROCESSING FAILED ===");
             log.error("Error processing KAG query: {}", e.getMessage(), e);
             return KAGResponse.builder()
                     .userQuery(userQuery)

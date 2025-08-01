@@ -8,7 +8,6 @@ import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 import org.springframework.data.neo4j.core.schema.Property;
 
-import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -34,7 +33,7 @@ public class Employee {
     private String role;
     
     @Property
-    private LocalDate joinDate;
+    private String joinDate;
     
     @Property
     private List<String> skills;

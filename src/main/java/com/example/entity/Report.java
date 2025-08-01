@@ -8,7 +8,6 @@ import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 import org.springframework.data.neo4j.core.schema.Property;
 
-import java.time.LocalDate;
 import java.util.Set;
 
 @Node
@@ -30,7 +29,7 @@ public class Report {
     private String type;
     
     @Property
-    private LocalDate date;
+    private String date;
     
     @Property
     private String filePath;

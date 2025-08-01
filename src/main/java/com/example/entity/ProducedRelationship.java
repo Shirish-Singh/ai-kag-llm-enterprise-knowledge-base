@@ -8,7 +8,7 @@ import org.springframework.data.neo4j.core.schema.RelationshipProperties;
 import org.springframework.data.neo4j.core.schema.TargetNode;
 import org.springframework.data.neo4j.core.schema.Property;
 
-import java.time.LocalDate;
+
 
 @RelationshipProperties
 @Data
@@ -23,7 +23,7 @@ public class ProducedRelationship {
     private String reportType;
     
     @Property
-    private LocalDate dateProduced;
+    private String dateProduced;
     
     @TargetNode
     private Report report;

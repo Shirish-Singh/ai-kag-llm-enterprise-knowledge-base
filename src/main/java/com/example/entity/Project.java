@@ -8,7 +8,6 @@ import org.springframework.data.neo4j.core.schema.Node;
 import org.springframework.data.neo4j.core.schema.Relationship;
 import org.springframework.data.neo4j.core.schema.Property;
 
-import java.time.LocalDate;
 import java.util.Set;
 
 @Node
@@ -30,10 +29,10 @@ public class Project {
     private String category;
     
     @Property
-    private LocalDate startDate;
+    private String startDate;
     
     @Property
-    private LocalDate endDate;
+    private String endDate;
     
     @Property
     private String status;
