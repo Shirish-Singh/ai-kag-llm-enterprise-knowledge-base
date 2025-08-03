@@ -248,7 +248,8 @@ public class EntityExtractionService {
         
         return organizations;
     }
-    
+
+    //Note: This can be forwarded to the LLM to determine the quality intent of the query.
     private QueryIntent determineQueryIntent(String query) {
         // Analyze query structure to determine intent
         if (query.contains("who") && (query.contains("worked") || query.contains("involved"))) {
